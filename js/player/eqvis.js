@@ -11,13 +11,8 @@ EqVis.prototype = {
 		}
 		
 		var defaults = {
-			// Container element that the canvas will append to
 			element: "",
-			
-			// Fill color for the EQ bars
 			color: "#FFFFFF",
-			
-			// Visualization dimensions
 			width: 1024,
 			height: 100
 		};
@@ -58,15 +53,12 @@ EqVis.prototype = {
 	update: function(e) {
 		if (!this.initialized) { return; }
 		
-		// This width of each band
+		// The width of each band
 		this.bandWidth = Math.floor(this.settings.width / e.bands.length);
 		
 		this.context.clearRect(0, 0, this.settings.width, this.settings.height);
 		
 		for (var x = 0; x < e.bands.length; x++) {
-			// Remove previous rectangle
-			//this.context.clearRect(x * this.bandWidth, 0, this.bandWidth, this.settings.height);
-			
 			// Calculate new rectangle amplitude
 			var height = Math.round(e.bands[x] * this.settings.height);
 			

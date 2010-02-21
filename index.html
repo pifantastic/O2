@@ -49,15 +49,14 @@
 			
 			// Create settings if needed
 			if (Setting.count() === 0) {
-				var settings = Setting.create({library_folders: ""});
-				settings.save();
+				Setting.create({library_folders: ""});
 			}
 			
 			// Load the main template
 			$("div#container").html(O2.main({songs: Song.find({all: true})}));
 			
 			// Initialize progress bar
-			$("#song-progressbar").progressbar({value: 0});
+			$("#controls-progressbar").progressbar({value: 0});
 			
 			var Player = new MediaPlayer();
 			
@@ -69,7 +68,7 @@
 		
 			Player.bind("progress", function(e) {
 				Visualization.update(e);
-				$("#song-progressbar").progressbar('value', e.percent);
+				$("#controls-progressbar").progressbar('value', e.percent);
 			});
 			
 			$("#controls-play").live("click", function() {
@@ -124,12 +123,7 @@
 				$progress.progressbar({value: 0});
 				
 				for (var x = 0; x < songs.length; x++) {
-					var url = songs[x].nativePath;
-					
-					// For OSX prepend file:///
-					if (url.indexOf("file:///") === -1 && air.Capabilities.os.indexOf("Mac OS") > -1) {
-						url = "file://" + url;
-					}
+					var url = (air.Capabilities.os.indexOf("Mac OS") > -1) ? 'file://' + songs[x].nativePath : songs[x].nativePath;
 					
 					if (Song.findByUrl(url) === false) {
 						// Load meta data and save song
