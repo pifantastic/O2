@@ -43,31 +43,27 @@
 				ActiveRecord.logging = true;
 				
 				Song = ActiveRecord.create('songs', {
-					title: '',
-					artist: '',
-					album: '',
-					year: '',
-					track: '',
-					path: ''
+					title: '', artist: '', album: '', year: '', track: '', path: ''
 				});
 				
 				Setting = ActiveRecord.create('settings', {
 					library_folders: '',
 				});
 				
+				// Create settings if none exist
 				if (Setting.count() === 0) {
 					var settings = Setting.create({library_folders: ""});
 					settings.save();
 				}
 				
-				var data = {
-					songs: Song.find({all: true})
-				};
-				
 				$("div#container").html(O2.main);
 				
-				var songs = Song.find({all: true});
-				$("div#library-wrapper").replaceWith(O2.library({songs: songs}));
+				$("div#library-wrapper").replaceWith(O2.library({songs: Song.find({all: true})}));
+				
+				$vis = $("div#visualization");
+				for (var x = 0; x < 256; x++) {
+					$vis.append('<div></div>');
+				}
 			});
 			
 			this.get('#/play', function(context) {
@@ -85,9 +81,11 @@
 			});
 			
 			this.get('#/settings', function(context) {
+				// Retrieve library folders from settings
 				var settings = Setting.find(1);
 				$("#library-folders").val(settings.library_folders);
 				
+				// Show settings dialog
 				$("div#settings").dialog({
 					title: "Settings",
 					autoOpen: false,
@@ -104,10 +102,13 @@
 							settings.set("library_folders", $("#library-folders").val());
 							settings.save();
 							$(this).dialog('close');
+							app.redirect("#/");
+							// KLUDGE
 							window.location.hash = '#';
 						},
 						Cancel: function() {
 							$(this).dialog('close');
+							// KLUDGE
 							window.location.hash = '#';
 						}
 					}
@@ -117,8 +118,6 @@
 			});
 			
 			this.get('#/scan', function(context) {
-				var settings = Setting.find(1);
-				var songs = [];
 				function search(folder) {
 					var dir = new air.File(folder);
 					if (!dir.exists || !dir.isDirectory) { return false; }
@@ -132,26 +131,22 @@
 					}
 				}
 				
+				// Scan library folders for mp3's
+				var settings = Setting.find(1);
 				var folders = settings.library_folders.split("\n");
+				var songs = [];
 				for (var x = 0; x < folders.length; x++) {
 					search(folders[x]);
 				}
 				
+				// Add new mp3's to the database
 				$progress = $("#scan-progressbar");
 				$progress.progressbar({value: 0});
 				for (var x = 0; x < songs.length; x++) {
 					Player.load(songs[x].nativePath, function(info) {
-						log(info);
 						var song = Song.findByPath(info.path);
 						if (!song) {
-							song = Song.create({
-								title: info.title,
-								artist: info.artist,
-								album: info.album,
-								track: info.track,
-								year: info.year,
-								path: info.path
-							});
+							song = Song.create(info);
 							song.save();
 						}
 						$progress.progressbar('value', Math.round((x / songs.length) * 100));

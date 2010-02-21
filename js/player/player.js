@@ -53,8 +53,8 @@ MediaPlayer.prototype = {
 		}
 	},
 	
-	// Mac OSX needs "file:///" prepended to urls for them to properly load
 	urlRequest: function(url) {
+		// Mac OSX needs "file:///" prepended to urls for them to properly load
 		if (air.Capabilities.os.indexOf("Mac OS") > -1) {
 			url = "file://" + url;
 		}
