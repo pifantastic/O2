@@ -20,11 +20,15 @@
 		<h2>Library</h2>
 		<div id="library">
 			{if $songs}
-				<ul>
+				<table>
 					{foreach $song in $songs}
-						<li><a href="#/load/{{ $song.id }}">{{ $song.title }}</a></li>
+						<tr>
+							<td>{{ $song.artist }}</td>
+							<td>{{ $song.album }}</td>
+							<td><a href="#/load/{{ $song.id }}">{{ $song.title }}</a></td>
+						</tr>
 					{/foreach}
-				</ul>
+				</table>
 			{/if}
 		</div>
 	</div>

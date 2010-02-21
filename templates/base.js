@@ -15,14 +15,14 @@ O2.library = function(opt_data, opt_sb) {
   var output = opt_sb || new soy.StringBuilder();
   output.append('\t<div id="library-wrapper"><h2>Library</h2><div id="library">');
   if (opt_data.songs) {
-    output.append('<ul>');
+    output.append('<table>');
     var songList9 = opt_data.songs;
     var songListLen9 = songList9.length;
     for (var songIndex9 = 0; songIndex9 < songListLen9; songIndex9++) {
       var songData9 = songList9[songIndex9];
-      output.append('<li><a href="#/load/', soy.$$escapeHtml(songData9.id), '">', soy.$$escapeHtml(songData9.title), '</a></li>');
+      output.append('<tr><td>', soy.$$escapeHtml(songData9.artist), '</td><td>', soy.$$escapeHtml(songData9.album), '</td><td><a href="#/load/', soy.$$escapeHtml(songData9.id), '">', soy.$$escapeHtml(songData9.title), '</a></td></tr>');
     }
-    output.append('</ul>');
+    output.append('</table>');
   }
   output.append('</div></div>');
   if (!opt_sb) return output.toString();

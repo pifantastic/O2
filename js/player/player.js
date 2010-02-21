@@ -32,7 +32,7 @@ MediaPlayer.prototype = {
 		// Load metadeta for this song
 		var sound = new air.Sound();
 		if ($.isFunction(onID3InfoReceived)) {
-			this.sound.addEventListener(air.Event.ID3, function(e) {
+			sound.addEventListener(air.Event.ID3, function(e) {
 				// Execute callback with id3 information
 				onID3InfoReceived({
 					title: e.target.id3['TIT2'],
@@ -46,6 +46,19 @@ MediaPlayer.prototype = {
 		}
 		
 		this.loaded_song = file;
+		try {
+			sound.load(this.urlRequest(this.loaded_song));
+		} catch(e) {
+			log("Error loading sound!", e);
+		}
+	},
+	
+	// Mac OSX needs "file:///" prepended to urls for them to properly load
+	urlRequest: function(url) {
+		if (air.Capabilities.os.indexOf("Mac OS") > -1) {
+			url = "file://" + url;
+		}
+		return new air.URLRequest(url);
 	},
 	
 	play: function() {
@@ -65,7 +78,7 @@ MediaPlayer.prototype = {
 			
 			// Load new song
 			this.sound = new air.Sound();
-			this.sound.load(new air.URLRequest(this.loaded_song));
+			this.sound.load(this.urlRequest(this.loaded_song));
 		}
 		
 		if (this.sound) {
