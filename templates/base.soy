@@ -5,10 +5,10 @@
  */
 {template .controls}
 	<div id="controls">
-		<a href="#/settings">settings</a>&nbsp;&nbsp;
-		<a href="#/play">play</a>&nbsp;&nbsp;
-		<a href="#/stop">stop</a>
-		<div id="song-progressbar"></div>
+		<a id="controls-settings" href="#">settings</a>&nbsp;&nbsp;
+		<a id="controls-play" href="#">play</a>&nbsp;&nbsp;
+		<a id="controls-stop" href="#">stop</a>
+		<div id="controls-progressbar"></div>
 	</div>
 {/template}
 
@@ -17,15 +17,14 @@
  */
 {template .library}
 	<div id="library-wrapper">
-		<h2>Library</h2>
 		<div id="library">
 			{if $songs}
 				<table>
 					{foreach $song in $songs}
-						<tr>
+						<tr id="song-{{ $song.id }}">
 							<td>{{ $song.artist }}</td>
 							<td>{{ $song.album }}</td>
-							<td><a href="#/load/{{ $song.id }}">{{ $song.title }}</a></td>
+							<td>{{ $song.songName }}</td>
 						</tr>
 					{/foreach}
 				</table>
@@ -39,11 +38,10 @@
  */
 {template .info}
 	<div id="info-wrapper">
-		<h2>Info</h2>
 		<div id="info">
 			{if $song}
 				<table>
-					<tr><td>Title</td><td>{{ $song.title }}</td></tr>
+					<tr><td>Title</td><td>{{ $song.songName }}</td></tr>
 					<tr><td>Artist</td><td>{{ $song.artist }}</td></tr>
 					<tr><td>Album</td><td>{{ $song.album }}</td></tr>
 					<tr><td>Year</td><td>{{ $song.year }}</td></tr>
@@ -58,8 +56,7 @@
  * 
  */
 {template .visualization}
-	<div id="visualization">
-	</div>
+	<div id="visualization"></div>
 {/template}
 
 
@@ -68,22 +65,21 @@
  */
 {template .settings}
 	<div id="settings" style="display: none">
-		<form action="" method="post" enctype="multipart/form-data">
-			<label for="library-folders">Library Folders</label>
-			<textarea id="library-folders" rows="10" cols="40"></textarea>
-			<a href="#/scan">Scan library folders for new music</a>
-			<div id="scan-progressbar"></div>
-		</form>
+		<label for="library-folders">Library Folders</label>
+		<textarea id="library-folders" rows="10" cols="40"></textarea>
+		<a id="settings-scan" href="#">Scan library folders for new music</a>
+		<div id="scan-progressbar"></div>
 	</div>
 {/template}
 
 /**
- * 
+ * @param? songs
+ * @param? song
  */
 {template .main}
-	{call O2.controls data="all" /}
-	{call O2.library data="all" /}
+	{call O2.controls /}
 	{call O2.info data="all" /}
-	{call O2.visualization data="all" /}
-	{call O2.settings data="all" /}
+	{call O2.visualization /}
+	{call O2.library data="all" /}
+	{call O2.settings /}
 {/template}

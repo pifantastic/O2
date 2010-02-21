@@ -17,11 +17,9 @@
 	<script type="text/javascript" src="js/jquery/jquery.js"></script>
 	<script type="text/javascript" src="js/jquery/jquery-ui.js"></script>
 	
-	<!-- Sammy.js -->
-	<script type="text/javascript" src="js/sammy/sammy.js"></script>
-	
 	<!-- Media Player -->
 	<script type="text/javascript" src="js/player/player.js"></script>
+	<script type="text/javascript" src="js/player/eqvis.js"></script>
 	
 	<!-- Google Closure Templates -->
 	<script type="text/javascript" src="js/google/soyutils.js"></script>
@@ -32,64 +30,67 @@
 <body>
 	<div id="container"></div>
 	<script type="text/javascript">
-		var Player = new MediaPlayer();
-		var log = air.Introspector.Console.log;
-
-		var app = $.sammy(function() {
-			this.element_selector = 'div#container';
+		$(function() {
+			// Shortcut
+			log = air.Introspector.Console.log;
 			
-			this.get('#/', function(context) {
-				// Connect to database
-				ActiveRecord.connect(ActiveRecord.Adapters.AIR, "db.sqlite");
-				ActiveRecord.logging = true;
-				
-				// Define models (creates tables if none exist)
-				Song = ActiveRecord.create('songs', {
-					title: '', artist: '', album: '', year: '', track: '', path: ''
-				});
-				
-				Setting = ActiveRecord.create('settings', {
-					library_folders: '',
-				});
-				
-				// Create settings if none exist
-				if (Setting.count() === 0) {
-					var settings = Setting.create({library_folders: ""});
-					settings.save();
-				}
-				
-				// Load the main template
-				$("div#container").html(O2.main);
-				
-				// Load the music library
-				$("div#library-wrapper").replaceWith(O2.library({songs: Song.find({all: true})}));
-				
-				// Initialize visualization
-				$vis = $("div#visualization");
-				for (var x = 0; x < 256; x++) {
-					$vis.append('<div></div>');
-				}
+			// Connect to databse
+			ActiveRecord.connect(ActiveRecord.Adapters.AIR, "db.sqlite");
+			ActiveRecord.logging = true;
+			
+			// Define models (creates tables if necessary)
+			Song = ActiveRecord.create('songs', {
+				songName: '', artist: '', album: '', year: '', track: '', genre: '', comment: '', url: ''
 			});
 			
-			this.get('#/play', function(context) {
+			Setting = ActiveRecord.create('settings', {
+				library_folders: '',
+			});
+			
+			// Create settings if needed
+			if (Setting.count() === 0) {
+				var settings = Setting.create({library_folders: ""});
+				settings.save();
+			}
+			
+			// Load the main template
+			$("div#container").html(O2.main({songs: Song.find({all: true})}));
+			
+			// Initialize progress bar
+			$("#song-progressbar").progressbar({value: 0});
+			
+			var Player = new MediaPlayer();
+			
+			var Visualization = new EqVis({
+				element: "div#visualization",
+				height: 50,
+				width: $(window).width()
+			});	
+		
+			Player.bind("progress", function(e) {
+				Visualization.update(e);
+				$("#song-progressbar").progressbar('value', e.percent);
+			});
+			
+			$("#controls-play").live("click", function() {
 				Player.play();
 			});
-			
-			this.get('#/stop', function(context) {
+		
+			$("#controls-stop").live("click", function() {
 				Player.stop();
 			});
-			
-			this.get('#/load/:id', function(context) {
-				var song = Song.find(context.params["id"]);
-				Player.load(song.path);
+		
+			$("#library tr").live("click", function() {
+				var song = Song.find($(this).attr("id").substring(5));
+				Player.load(song.url);
 				$("div#info-wrapper").replaceWith(O2.info({song: song}));
 			});
-			
-			this.get('#/settings', function(context) {
+		
+			$("#controls-settings").live("click", function() {
 				// Retrieve library folders from settings
 				var settings = Setting.find(1);
 				$("#library-folders").val(settings.library_folders);
-				
+			
 				// Show settings dialog
 				$("div#settings").dialog({
 					title: "Settings",
@@ -106,58 +107,53 @@
 						Save: function() {
 							settings.set("library_folders", $("#library-folders").val());
 							settings.save();
-							$(this).dialog('close');
-							// KLUDGE
-							window.location.hash = '#';
-						},
-						Cancel: function() {
-							$(this).dialog('close');
-							// KLUDGE
-							window.location.hash = '#';
 						}
 					}
 				});
-				
+			
 				$("div#settings").dialog('open');
 			});
-			
-			this.get('#/scan', function(context) {
+		
+			$("#settings-scan").live("click", function() {
 				// Scan library folders for mp3's
 				var settings = Setting.find(1);
 				var folders = settings.library_folders.split("\n");
 				var songs = Player.search(folders);
-				
-				// Add new mp3's to the database
+			
 				$progress = $("#scan-progressbar");
 				$progress.progressbar({value: 0});
+				
 				for (var x = 0; x < songs.length; x++) {
-					Player.load(songs[x].nativePath, function(info) {
-						var song = Song.findByPath(info.path);
-						if (!song) {
-							song = Song.create(info);
-							song.save();
-						}
-						$progress.progressbar('value', Math.round((x / songs.length) * 100));
-					});
+					var url = songs[x].nativePath;
+					
+					// For OSX prepend file:///
+					if (url.indexOf("file:///") === -1 && air.Capabilities.os.indexOf("Mac OS") > -1) {
+						url = "file://" + url;
+					}
+					
+					if (Song.findByUrl(url) === false) {
+						// Load meta data and save song
+						var sound = new air.Sound(new air.URLRequest(url));
+						sound.addEventListener(air.Event.ID3, function(e) {
+							song = Song.create({
+								songName: e.target.id3.songName,
+								album: e.target.id3.album,
+								artist: e.target.id3.artist,
+								genre: e.target.id3.genre,
+								url: e.target.url,
+								track: e.target.id3.track,
+								comment: e.target.id3.comment,
+								year: e.target.id3.year
+							});
+						});
+					}
+					
+					$progress.progressbar('value', (x / songs.length) * 100);
 				}
-				$progress.progressbar({value: 100});
+				
+				$("div#library-wrapper").html(O2.library({songs: Song.find({all: true})}));
 			});
-			
 		});
-		
-		Player.bind("progress", function(e) {
-			$("div#visualization div").each(function(band) {
-				$(this).css({height: 256 - (e.bands[band] * 256)});
-			});
-			
-			$("#song-progressbar").progressbar('value', e.percent);
-		});
-		
-		(function($) {
-		
-			app.run('#/');
-		
-		})(jQuery);
 	</script>
 </body>
 </html>

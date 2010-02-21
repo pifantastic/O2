@@ -28,41 +28,12 @@ MediaPlayer.prototype = {
 		};
 	},
 	
-	load: function(file, onID3InfoReceived) {
-		// Load metadeta for this song
-		var sound = new air.Sound();
-		if ($.isFunction(onID3InfoReceived)) {
-			sound.addEventListener(air.Event.ID3, function(e) {
-				// Execute callback with id3 information
-				onID3InfoReceived({
-					title: e.target.id3['TIT2'],
-					artist: e.target.id3['TPE1'],
-					album: e.target.id3['TALB'],
-					year: e.target.id3['TYER'],
-					track: e.target.id3['TRCK'],
-					path: file
-				});
-			});
-		}
-		
-		this.loaded_song = file;
-		try {
-			sound.load(this.urlRequest(this.loaded_song));
-		} catch(e) {
-			log("Error loading sound!", e);
-		}
-	},
-	
-	urlRequest: function(url) {
-		// Mac OSX needs "file:///" prepended to urls for them to properly load
-		if (air.Capabilities.os.indexOf("Mac OS") > -1) {
-			url = "file://" + url;
-		}
-		return new air.URLRequest(url);
+	load: function(url) {
+		this.loaded_song = url;
 	},
 	
 	play: function() {
-		// Are we playing a new song are restarting the old one?
+		// Are we playing a new song or restarting the old one?
 		if (this.loaded_song !== this.playing_song) {
 			
 			// Stop song if its playing
@@ -71,14 +42,14 @@ MediaPlayer.prototype = {
 			// Reset position
 			this.position = 0;
 			
-			// Close current sound if its still open
+			// Close current sound if it's still open
 			try {
 				this.sound.close();
 			} catch(e) {}
 			
 			// Load new song
 			this.sound = new air.Sound();
-			this.sound.load(this.urlRequest(this.loaded_song));
+			this.sound.load(new air.URLRequest(this.loaded_song));
 		}
 		
 		if (this.sound) {
@@ -89,7 +60,7 @@ MediaPlayer.prototype = {
 			this.playing_song = this.loaded_song;
 			
 			// Progress event
-			this.interval = setInterval($.proxy(this.playbackProgress, this), 100);
+			this.interval = setInterval($.proxy(this.playbackProgress, this), 50);
 			
 			// Song end event
 			this.sound.addEventListener(air.Event.SOUND_COMPLETE, $.proxy(this.playbackComplete, this));
@@ -177,7 +148,6 @@ MediaPlayer.prototype = {
 			}
 		}
 		
-		log(songs);
 		return songs;
 	}
 	

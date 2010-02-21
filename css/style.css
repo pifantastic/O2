@@ -1,38 +1,19 @@
+* {
+	font-family: arial;
+}
+
 div#controls {
-	width: 100%;
 }
 
 div#library-wrapper {
-	width: 50%;
-	float: left;
-	overflow: hidden;
 }
 
 	div#library {
-		height: 400px;
-		overflow: scroll;
 		font-size: 11px;
 	}
 
 div#info-wrapper {
-	width: 50%;
-	float: left;
 }
 
 	div#info {
-		padding: 10px 20px;
-	}
-
-div#visualization {
-	width: 100%;
-	clear: both;
-	height: 256px;
-	background-color: #132F54;
-}
-
-	div#visualization div {
-		width: 4px;
-		height: 256px;
-		float: left;
-		background-color: #FFFFFF;
 	}
