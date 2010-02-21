@@ -1,0 +1,85 @@
+{namespace O2}
+
+/**
+ *
+ */
+{template .controls}
+	<div id="controls">
+		<a href="#/settings">settings</a>&nbsp;&nbsp;
+		<a href="#/play">play</a>&nbsp;&nbsp;
+		<a href="#/stop">stop</a>
+		<div id="song-progressbar"></div>
+	</div>
+{/template}
+
+/**
+ * @param songs
+ */
+{template .library}
+	<div id="library-wrapper">
+		<h2>Library</h2>
+		<div id="library">
+			{if $songs}
+				<ul>
+					{foreach $song in $songs}
+						<li><a href="#/load/{{ $song.id }}">{{ $song.title }}</a></li>
+					{/foreach}
+				</ul>
+			{/if}
+		</div>
+	</div>
+{/template}
+
+/**
+ * @param song
+ */
+{template .info}
+	<div id="info-wrapper">
+		<h2>Info</h2>
+		<div id="info">
+			{if $song}
+				<table>
+					<tr><td>Title</td><td>{{ $song.title }}</td></tr>
+					<tr><td>Artist</td><td>{{ $song.artist }}</td></tr>
+					<tr><td>Album</td><td>{{ $song.album }}</td></tr>
+					<tr><td>Year</td><td>{{ $song.year }}</td></tr>
+					<tr><td>Track</td><td>{{ $song.track }}</td></tr>
+				</table>
+			{/if}
+		</div>
+	</div>
+{/template}
+
+/**
+ * 
+ */
+{template .visualization}
+	<div id="visualization">
+	</div>
+{/template}
+
+
+/**
+ * 
+ */
+{template .settings}
+	<div id="settings" style="display: none">
+		<form action="" method="post" enctype="multipart/form-data">
+			<label for="library-folders">Library Folders</label>
+			<textarea id="library-folders" rows="10" cols="40"></textarea>
+			<a href="#/scan">Scan library folders for new music</a>
+			<div id="scan-progressbar"></div>
+		</form>
+	</div>
+{/template}
+
+/**
+ * 
+ */
+{template .main}
+	{call O2.controls data="all" /}
+	{call O2.library data="all" /}
+	{call O2.info data="all" /}
+	{call O2.visualization data="all" /}
+	{call O2.settings data="all" /}
+{/template}
