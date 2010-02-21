@@ -151,6 +151,34 @@ MediaPlayer.prototype = {
 		for (var x = 0; x < this.events[event].length; x++) {
 			this.events[event][x](context);
 		}
+	},
+	
+	search: function(dirs) {
+		var songs = [];
+		var dirs = dirs || [];
+		
+		while (dirs.length) {
+			var dir = new air.File(dirs.shift());
+			
+			if (!dir.exists || !dir.isDirectory) {
+				continue;
+			}
+			
+			var files = dir.getDirectoryListing();
+			var filesLength = files.length;
+			for (var x = 0; x < filesLength; x++) {
+				// If the file is a directory push it onto the search stack
+				if (files[x].isDirectory) {
+					dirs.push(files[x].nativePath);
+				// If the files is an mp3 add it to songs
+				} else if(files[x].extension === "mp3") {
+					songs.push(files[x]);
+				}
+			}
+		}
+		
+		log(songs);
+		return songs;
 	}
 	
 };

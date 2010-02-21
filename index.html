@@ -39,9 +39,11 @@
 			this.element_selector = 'div#container';
 			
 			this.get('#/', function(context) {
+				// Connect to database
 				ActiveRecord.connect(ActiveRecord.Adapters.AIR, "db.sqlite");
 				ActiveRecord.logging = true;
 				
+				// Define models (creates tables if none exist)
 				Song = ActiveRecord.create('songs', {
 					title: '', artist: '', album: '', year: '', track: '', path: ''
 				});
@@ -56,10 +58,13 @@
 					settings.save();
 				}
 				
+				// Load the main template
 				$("div#container").html(O2.main);
 				
+				// Load the music library
 				$("div#library-wrapper").replaceWith(O2.library({songs: Song.find({all: true})}));
 				
+				// Initialize visualization
 				$vis = $("div#visualization");
 				for (var x = 0; x < 256; x++) {
 					$vis.append('<div></div>');
@@ -102,7 +107,6 @@
 							settings.set("library_folders", $("#library-folders").val());
 							settings.save();
 							$(this).dialog('close');
-							app.redirect("#/");
 							// KLUDGE
 							window.location.hash = '#';
 						},
@@ -118,26 +122,10 @@
 			});
 			
 			this.get('#/scan', function(context) {
-				function search(folder) {
-					var dir = new air.File(folder);
-					if (!dir.exists || !dir.isDirectory) { return false; }
-					var files = dir.getDirectoryListing();
-					for (var x = 0; x < files.length; x++) {
-						if (!files[x].isDirectory && files[x].extension === "mp3") {
-							songs.push(files[x]);
-						} else {
-							search(files[x].nativePath);
-						}
-					}
-				}
-				
 				// Scan library folders for mp3's
 				var settings = Setting.find(1);
 				var folders = settings.library_folders.split("\n");
-				var songs = [];
-				for (var x = 0; x < folders.length; x++) {
-					search(folders[x]);
-				}
+				var songs = Player.search(folders);
 				
 				// Add new mp3's to the database
 				$progress = $("#scan-progressbar");
