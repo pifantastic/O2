@@ -21,10 +21,7 @@ MediaPlayer.prototype = {
 		this.interval;
 		
 		this.events = {
-			"progress": [],
-			"start": [],
-			"stop": [],
-			"end": []
+			"progress": []
 		};
 	},
 	
@@ -34,6 +31,7 @@ MediaPlayer.prototype = {
 		
 		var sound = new air.Sound(new air.URLRequest(file));
 		sound.addEventListener(air.Event.ID3, function(e) {
+			log(e);
 			callback(e.target.id3);
 		});
 	},
@@ -41,7 +39,7 @@ MediaPlayer.prototype = {
 	play: function() {
 		// Are we playing a new song or restarting the old one?
 		if (this.loaded_song !== this.playing_song) {
-			// Stop song if its playing
+			// Stop song if it's playing
 			this.stop();
 			
 			// Reset position
@@ -52,14 +50,14 @@ MediaPlayer.prototype = {
 				this.sound.close();
 			} catch(e) {}
 			
+			delete this.sound;
+			
 			// Load new song
 			this.sound = new air.Sound();
 			this.sound.load(new air.URLRequest(this.loaded_song));
 		}
 		
 		if (this.sound) {
-			this.run("start");
-			
 			// Play song
 			this.channel = this.sound.play(this.position);
 			this.playing_song = this.loaded_song;
@@ -80,8 +78,6 @@ MediaPlayer.prototype = {
 			
 			// Stop song
 			this.channel.stop();
-			
-			this.run("stop");
 		}
 	},
 	
@@ -111,7 +107,6 @@ MediaPlayer.prototype = {
 	
 	playbackComplete: function() {
 		clearInterval(this.interval);
-		this.run("end");
 	},
 	
 	bind: function(event, callback) {

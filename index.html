@@ -49,17 +49,13 @@
 				folders: ['/Users/aaron/Music/iTunes/iTunes Media/Music']
 			});
 			
-			var Visualization = new EqVis({
-				element: "div#visualization",
-				height: 75,
-				width: $(window).width()
-			});	
+			var Visualization = new EqVis("div#visualization");	
 			
 			// Initialize progress bar
 			$("#progressbar").progressbar({value: 0});
 			
 			Player.bind("progress", function(e) {
-				Visualization.update(e);
+				Visualization.update(e.bands);
 				$("#progressbar").progressbar('value', e.percent);
 			});
 			
@@ -75,7 +71,6 @@
 			}
 			
 			$("#library li").click(function() {
-				log($(this).text());
 				Player.load($(this).text(), function(id3) {
 					$("#info h2").text(id3.songName);
 					$("#info h3").text(id3.artist);
