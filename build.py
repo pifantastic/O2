@@ -23,7 +23,7 @@ RUN_TESTS = False
 BUILD_PATH = "build"
 
 templates = [
-	(os.path.join("templates", "base.js"), os.path.join("templates", "base.soy")),
+	#(os.path.join("templates", "base.js"), os.path.join("templates", "base.soy")),
 ]
 
 def usage():

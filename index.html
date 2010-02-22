@@ -2,151 +2,87 @@
 <html>
 <head>
 	<title>O2</title>
-	<link type="text/css" href="css/style.css" rel="stylesheet" />
+	
 	<link type="text/css" href="css/smoothness/jquery-ui-1.7.2.custom.css" rel="stylesheet" />
+	<link type="text/css" href="css/style.css" rel="stylesheet" />
 	
 	<!-- AIR -->
 	<script type="text/javascript" src="js/air/AIRAliases.js"></script>
 	<script type="text/javascript" src="js/air/AIRIntrospector.js"></script>
-	<script type="text/javascript" src="js/air/AIRLocalizer.js" charset="utf-8"></script>
-	
-	<!-- Active JS -->
-	<script type="text/javascript" src="js/activejs/active.air.js"></script>
 	
 	<!-- jQuery -->
 	<script type="text/javascript" src="js/jquery/jquery.js"></script>
 	<script type="text/javascript" src="js/jquery/jquery-ui.js"></script>
+	<script type="text/javascript" src="js/jquery/jquery.quicksearch.js"></script>
 	
 	<!-- Media Player -->
 	<script type="text/javascript" src="js/player/player.js"></script>
 	<script type="text/javascript" src="js/player/eqvis.js"></script>
-	
-	<!-- Google Closure Templates -->
-	<script type="text/javascript" src="js/google/soyutils.js"></script>
-	
-	<!-- Templates -->
-	<script type="text/javascript" src="templates/base.js"></script>
 </head>
 <body>
-	<div id="container"></div>
+	<div id="container">
+		<div id="controls">
+			<a id="controls-play" href="#">play</a>&nbsp;&nbsp;
+			<a id="controls-stop" href="#">stop</a>
+		</div>
+
+		<div id="visualization"></div>
+
+		<div id="info">
+			<h2></h2>
+			<h3></h3>
+		</div>
+
+		<div id="progressbar"></div>
+
+		<div id="library">
+			<input id="search" type="text" />
+			<ul></ul>
+		</div>
+	</div>
 	<script type="text/javascript">
 		$(function() {
-			// Shortcut
+			// Shortcut for Console.log
 			log = air.Introspector.Console.log;
 			
-			// Connect to databse
-			ActiveRecord.connect(ActiveRecord.Adapters.AIR, "db.sqlite");
-			ActiveRecord.logging = true;
-			
-			// Define models (creates tables if necessary)
-			Song = ActiveRecord.create('songs', {
-				songName: '', artist: '', album: '', year: '', track: '', genre: '', comment: '', url: ''
+			var Player = new MediaPlayer({
+				folders: ['/Users/aaron/Music/iTunes/iTunes Media/Music']
 			});
-			
-			Setting = ActiveRecord.create('settings', {
-				library_folders: '',
-			});
-			
-			// Create settings if needed
-			if (Setting.count() === 0) {
-				Setting.create({library_folders: ""});
-			}
-			
-			// Load the main template
-			$("div#container").html(O2.main({songs: Song.find({all: true})}));
-			
-			// Initialize progress bar
-			$("#controls-progressbar").progressbar({value: 0});
-			
-			var Player = new MediaPlayer();
 			
 			var Visualization = new EqVis({
 				element: "div#visualization",
-				height: 50,
+				height: 75,
 				width: $(window).width()
 			});	
-		
+			
+			// Initialize progress bar
+			$("#progressbar").progressbar({value: 0});
+			
 			Player.bind("progress", function(e) {
 				Visualization.update(e);
-				$("#controls-progressbar").progressbar('value', e.percent);
+				$("#progressbar").progressbar('value', e.percent);
 			});
 			
-			$("#controls-play").live("click", function() {
-				Player.play();
-			});
-		
-			$("#controls-stop").live("click", function() {
-				Player.stop();
-			});
-		
-			$("#library tr").live("click", function() {
-				var song = Song.find($(this).attr("id").substring(5));
-				Player.load(song.url);
-				$("div#info-wrapper").replaceWith(O2.info({song: song}));
-			});
-		
-			$("#controls-settings").live("click", function() {
-				// Retrieve library folders from settings
-				var settings = Setting.find(1);
-				$("#library-folders").val(settings.library_folders);
+			$("#controls-play").click(function() { Player.play(); });
+			$("#controls-stop").click(function() { Player.stop(); });
 			
-				// Show settings dialog
-				$("div#settings").dialog({
-					title: "Settings",
-					autoOpen: false,
-					bgiframe: true,
-					height: 500,
-					width: 600,
-					modal: true,
-					overlay: {
-						backgroundColor: '#000',
-						opacity: 0.7
-					},
-					buttons: {
-						Save: function() {
-							settings.set("library_folders", $("#library-folders").val());
-							settings.save();
-						}
-					}
+			// Search for mp3's
+			var songs = Player.search(Player.settings.folders);
+			
+			$lib = $("div#library ul");
+			for (var x = 0; x < songs.length; x++) {
+				$lib.append('<li>' + songs[x].nativePath + '</li>');
+			}
+			
+			$("#library li").click(function() {
+				log($(this).text());
+				Player.load($(this).text(), function(id3) {
+					$("#info h2").text(id3.songName);
+					$("#info h3").text(id3.artist);
 				});
-			
-				$("div#settings").dialog('open');
 			});
-		
-			$("#settings-scan").live("click", function() {
-				// Scan library folders for mp3's
-				var settings = Setting.find(1);
-				var folders = settings.library_folders.split("\n");
-				var songs = Player.search(folders);
 			
-				$progress = $("#scan-progressbar");
-				$progress.progressbar({value: 0});
-				
-				for (var x = 0; x < songs.length; x++) {
-					var url = (air.Capabilities.os.indexOf("Mac OS") > -1) ? 'file://' + songs[x].nativePath : songs[x].nativePath;
-					
-					if (Song.findByUrl(url) === false) {
-						// Load meta data and save song
-						var sound = new air.Sound(new air.URLRequest(url));
-						sound.addEventListener(air.Event.ID3, function(e) {
-							song = Song.create({
-								songName: e.target.id3.songName,
-								album: e.target.id3.album,
-								artist: e.target.id3.artist,
-								genre: e.target.id3.genre,
-								url: e.target.url,
-								track: e.target.id3.track,
-								comment: e.target.id3.comment,
-								year: e.target.id3.year
-							});
-						});
-					}
-					
-					$progress.progressbar('value', (x / songs.length) * 100);
-				}
-				
-				$("div#library-wrapper").html(O2.library({songs: Song.find({all: true})}));
-			});
+			$('input#search').quicksearch('#library li');
 		});
 	</script>
 </body>

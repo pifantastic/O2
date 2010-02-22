@@ -8,7 +8,7 @@ MediaPlayer.prototype = {
 	
 	init: function(options) {
 		this.defaults = {
-			music_library: ""
+			folders: []
 		}
 		
 		this.settings = $.extend(this.defaults, options);
@@ -28,14 +28,19 @@ MediaPlayer.prototype = {
 		};
 	},
 	
-	load: function(url) {
-		this.loaded_song = url;
+	load: function(file, callback) {
+		file = (air.Capabilities.os.indexOf('Mac OS') > -1) ? 'file://' + file : file;
+		this.loaded_song = file;
+		
+		var sound = new air.Sound(new air.URLRequest(file));
+		sound.addEventListener(air.Event.ID3, function(e) {
+			callback(e.target.id3);
+		});
 	},
 	
 	play: function() {
 		// Are we playing a new song or restarting the old one?
 		if (this.loaded_song !== this.playing_song) {
-			
 			// Stop song if its playing
 			this.stop();
 			
@@ -60,7 +65,7 @@ MediaPlayer.prototype = {
 			this.playing_song = this.loaded_song;
 			
 			// Progress event
-			this.interval = setInterval($.proxy(this.playbackProgress, this), 50);
+			this.interval = setInterval($.proxy(this.playbackProgress, this), 20);
 			
 			// Song end event
 			this.sound.addEventListener(air.Event.SOUND_COMPLETE, $.proxy(this.playbackComplete, this));

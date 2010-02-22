@@ -5,15 +5,40 @@
 div#controls {
 }
 
-div#library-wrapper {
+div#library {
+	clear: both;
+	font-size: 11px;
+}
+		
+	div#library table {
+		width: 100%;
+	}
+	
+		div#library tr:hover {
+			cursor: pointer;
+		}
+			
+			div#library td {
+				padding: 1px 2px;
+			}
+	
+div#info {
+	margin-top: -60px;
+	height: 60px;
 }
 
-	div#library {
-		font-size: 11px;
+	div#info h2, h3 {
+		text-align: center;
+		margin: 0;
 	}
-
-div#info-wrapper {
+		
+div#visualization {
+	height: 75px;
 }
 
-	div#info {
-	}
+/******************
+ * jQuery UI mods
+ ******************/
+.ui-progressbar {
+	height: 25px;
+}
